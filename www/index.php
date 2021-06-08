@@ -50,6 +50,11 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
         <title><?php echo $title; ?></title>
+        <style>
+            td, th {
+                text-align: right;
+            }
+        </style>
     </head>
 <body>
     <div class="container">
@@ -77,7 +82,7 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
             </div>
 
             <div class="mb-3">
-                <label for="value" class="control-label">Hodnota</label>
+                <label for="value" class="control-label">Hodnota (Kč)</label>
                 <div class="input-group">
                     <input
                         type="number"
@@ -87,7 +92,7 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
                         placeholder="<?php echo $DEFAULT_VALUE; ?>"
                         step="<?php echo intval($DEFAULT_VALUE / 10); ?>"
                     />
-                    <span class="input-group-text"> Kč</span>
+                    <!-- <span class="input-group-text"> Kč</span> //-->
                 </div>
             </div>
             <div class="mb-3">
@@ -108,9 +113,9 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
             $value_max = round($table[$YEAR_MAX]['value']);
             echo (
                 "<p>" .
-                    "<strong>$value Kč</strong> v roce <strong>$year</strong> má stejnou hodnotu jako " .
-                    "<strong>$value_min Kč</strong> v roce <strong>$YEAR_MIN</strong> " .
-                    "nebo <strong>$value_max Kč</strong> v roce <strong>$YEAR_MAX</strong>." .
+                    "<strong>$value&nbsp;Kč</strong> v roce <strong>$year</strong> má stejnou hodnotu jako " .
+                    "<strong>$value_min&nbsp;Kč</strong> v roce <strong>$YEAR_MIN</strong> " .
+                    "nebo <strong>$value_max&nbsp;Kč</strong> v roce <strong>$YEAR_MAX</strong>." .
                 "</p>"
             );
 
@@ -120,7 +125,7 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
                 <thead>
                     <tr>
                     <th scope="col">Rok</th>
-                    <th scope="col">Odpovídající hodnota</th>
+                    <th scope="col">Odpovídající hodnota&nbsp;Kč</th>
                     <th scope="col">Koeficient</th>
                     </tr>
                 </thead>
@@ -133,8 +138,8 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
                         }
                         echo '>';
                         echo '<td>' . $y . '</td>';
-                        echo '<td>' . round($table[$y]['value']) . ' Kč</td>';
-                        echo '<td>' . round($table[$y]['coef'], 3) . '</td>';
+                        echo '<td>' . round($table[$y]['value']) . '</td>';
+                        echo '<td>' . sprintf("%0.3f", $table[$y]['coef']) . '</td>';
                         echo '</tr>';
                     }
                 ?>
