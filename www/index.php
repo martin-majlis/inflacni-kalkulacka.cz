@@ -161,6 +161,16 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
         </div>
     </div>
 
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-322031-31"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-322031-31');
+    </script>
+
 
 </body>
 </html>
