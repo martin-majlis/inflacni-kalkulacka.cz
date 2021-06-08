@@ -125,7 +125,7 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
                 <thead>
                     <tr>
                     <th scope="col">Rok</th>
-                    <th scope="col">Odpovídající hodnota</th>
+                    <th scope="col">Odpovídající hodnota&nbsp;Kč</th>
                     <th scope="col">Koeficient</th>
                     </tr>
                 </thead>
@@ -138,7 +138,7 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
                         }
                         echo '>';
                         echo '<td>' . $y . '</td>';
-                        echo '<td>' . round($table[$y]['value']) . ' Kč</td>';
+                        echo '<td>' . round($table[$y]['value']) . '</td>';
                         echo '<td>' . sprintf("%0.3f", $table[$y]['coef']) . '</td>';
                         echo '</tr>';
                     }
