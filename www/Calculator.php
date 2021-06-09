@@ -73,6 +73,11 @@ class Calculator
 
         return $years;
     }
+
+    public function inflation(int $year): float
+    {
+        return YEAR_TABLE[$year];
+    }
 }
 
 /*
