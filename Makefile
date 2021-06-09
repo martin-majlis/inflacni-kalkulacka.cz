@@ -14,6 +14,10 @@ check-tests:
 	./vendor/bin/phpunit --testdox $(DIR_TEST)
 
 check-code-sniffer:
+	./vendor/bin/phpcbf \
+		--standard=PSR12 \
+		-p \
+		$(DIR_SOURCE)/ $(DIR_TEST)/; \
 	./vendor/bin/phpcs \
 		--standard=PSR12 \
 		-p \

@@ -3,10 +3,23 @@
 namespace InflationCalculator;
 
 // https://www.czso.cz/csu/czso/mira_inflace
-
-const UNKNOWN_YEAR = 2.0;
+// https://vdb.czso.cz/vdbvo2/faces/cs/index.jsf?page=vystup-objekt&skupId=43&katalog=31779&z=T&f=TABULKA&pvo=CEN08C&pvo=CEN08C
+// https://eprehledy.cz/vyvoj_inflace_cr.php
+// http://www.czso.cz/csu/redakce.nsf/i/mira_inflace
 
 const YEAR_TABLE = array(
+    1993 => 20.8,
+    1994 => 10.0,
+    1995 => 9.1,
+    1996 => 8.8,
+    1997 => 8.5,
+    1998 => 10.7,
+    1999 => 2.1,
+    2000 => 3.9,
+    2001 => 4.7,
+    2002 => 1.8,
+    2003 => 0.1,
+    2004 => 2.8,
     2005 => 1.9,
     2006 => 2.5,
     2007 => 2.8,
@@ -29,6 +42,8 @@ const YEAR_TABLE = array(
 
 define('YEAR_MIN', min(array_keys(YEAR_TABLE)));
 define('YEAR_MAX', max(array_keys(YEAR_TABLE)) - 1);
+
+const UNKNOWN_YEAR = 2.0;
 
 class Calculator
 {
@@ -57,6 +72,11 @@ class Calculator
         ksort($years, SORT_NUMERIC);
 
         return $years;
+    }
+
+    public function inflation(int $year): float
+    {
+        return YEAR_TABLE[$year];
     }
 }
 
