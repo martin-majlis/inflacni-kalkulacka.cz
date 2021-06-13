@@ -3,17 +3,39 @@ require_once('Calculator.php');
 
 use InflationCalculator\Calculator;
 
-$DEFAULT_VALUE = 10000;
-$DEFAULT_YEAR = "" . (date("Y") - 1);
+// https://github.com/squizlabs/PHP_CodeSniffer/wiki/Advanced-Usage
+// TODO: just PSR1.Files.SideEffects.FoundWithSymbols - does not work :/
+// phpcs:disable
+define('DEFAULT_VALUE', 10000);
+define('LOOKAHEAD_YEARS', 5);
 
-$year = intval($_GET['year'] ?? $DEFAULT_YEAR);
-$value = floatval($_GET['value'] ?? $DEFAULT_VALUE);
+define('YEAR_CURRENT', intval(date('Y')));
+define('YEAR_DEFAULT', "" . (YEAR_CURRENT - 1));
+define('YEAR_MAX_TARGET', YEAR_CURRENT + LOOKAHEAD_YEARS);
+
+function web_link(float $v, int $y, int $t): string
+{
+    return 'https://' . $_SERVER['HTTP_HOST'] . "/?year=$y&value=$v&target=$t";
+}
+// phpcs:enable
+
+$year = intval($_GET['year'] ?? YEAR_DEFAULT);
+$target = intval($_GET['target'] ?? 0);
+if ($target == 0) {
+    $target = $year - LOOKAHEAD_YEARS;
+    if ($target < YEAR_MIN) {
+        $target = $year + LOOKAHEAD_YEARS;
+    }
+}
+
+$value = floatval($_GET['value'] ?? DEFAULT_VALUE);
 if ($value == 0) {
-    $value = $DEFAULT_VALUE;
+    $value = DEFAULT_VALUE;
 }
 $format = $_GET['format'] ?? 'html';
 
-$api_url = 'https://' . $_SERVER['HTTP_HOST'] . "/?year=$year&value=$value&format=json";
+$web_url = web_link($value, $year, $target);
+$api_url = $web_url . '&format=json';
 
 if ($year < YEAR_MIN || $year > YEAR_MAX) {
     http_response_code(400);
@@ -23,6 +45,9 @@ if ($year < YEAR_MIN || $year > YEAR_MAX) {
 
 // print("YEAR: $year; VALUE: $value; Format: $format");
 
+$calculator = new Calculator();
+$table = $calculator->conversionTable($value, $year);
+
 if ($format == 'json') {
     header('Content-Type: application/json');
     echo json_encode(
@@ -31,16 +56,34 @@ if ($format == 'json') {
                 'year' => $year,
                 'value' => $value,
             ),
-            'year' => conversion_table_1($value, $year)
+            'year' => $table
         )
     );
     exit(0);
+} elseif ($format != 'html') {
+    // Permanent 301 redirection
+    header("HTTP/1.1 301 Moved Permanently");
+    header("Location: $web_url");
+    exit(0);
 }
 
+$messages = $calculator->messages($value, $year, $target);
+
 $title = 'Inflační kalkulačka';
-if (isset($_GET['year']) && isset($_GET['month'])) {
+$description = (
+    'Inflační kalkulačka vám spočítá, jakou hodnotu měly Vaše peníze v minulosti a ' .
+    'jakou budou mit hodnotu v budoucnosti.'
+);
+if (isset($_GET['year']) && isset($_GET['value']) && isset($_GET['target'])) {
     $title .= " - hodnota $value z roku $year";
+    $description = html_entity_decode(
+        strip_tags('Inflační kalkulačka: ' . implode('; ', $messages))
+    );
 }
+
+// https://developer.mozilla.org/en-US/docs/Learn/HTML/Introduction_to_HTML/The_head_metadata_in_HTML
+// https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/summary-card-with-large-image
+// https://ogp.me/
 
 ?>
 
@@ -56,26 +99,60 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
             crossorigin="anonymous"
         />
         <title><?php echo $title; ?></title>
+        <meta property="og:site_name" content="Inflační kalkulačka" />
+        <meta property='og:url' content="<?php echo $web_url; ?>" />
+        <meta property="og:title" content="<?php echo $title; ?>">
+        <meta property="og:description" content="<?php echo $description; ?>">
+        <meta name="twitter:title" content="<?php echo $title; ?>">
+        <meta name="twitter:description" content="<?php echo $description; ?>">
+
+        <meta property="description" content="<?php echo $description; ?>">
+        <meta name="keywords" content="inflace, hodnota peněz, úspory, inflační kalkulačka">
+        <link rel="canonical" href="<?php echo $web_url; ?>">
+
         <style>
             td, th {
                 text-align: right;
+            }
+            h1 a {
+                color: inherit;
+                text-decoration: inherit;
             }
         </style>
     </head>
 <body>
     <div class="container">
-        <h1>Inflační kalkulačka</h1>
+        <h1><a href="/">Inflační kalkulačka</a></h1>
+        <p>
+            Inflační kalkulačka vám spočítá, jakou hodnotu měly Vaše peníze v minulosti a
+            jakou budou mit hodnotu v budoucnosti.
+        </p>
 
         <form class="row">
+        <div class="mb-3">
+                <label for="value" class="control-label">Hodnota (Kč)</label>
+                <div class="input-group">
+                    <input
+                        type="number"
+                        class="form-control-lg"
+                        id="value"
+                        name="value"
+                        placeholder="<?php echo DEFAULT_VALUE; ?>"
+                        value="<?php echo $value; ?>"
+                    />
+                    <!-- <span class="input-group-text"> Kč</span> //-->
+                </div>
+            </div>
+
             <div class="mb-3">
-                <label for="year" class="control-label">Rok</label>
+                <label for="year" class="control-label">z roku</label>
                 <select
                     class="form-select form-select-lg"
                     name="year"
                     id="year"
                 >
                     <?php
-                    for ($y = YEAR_MIN; $y <= YEAR_MAX; $y++) {
+                    for ($y = YEAR_MIN; $y <= YEAR_DEFAULT; $y++) {
                         echo "<option value='$y'";
                         if ($y == $year) {
                             echo " selected";
@@ -87,20 +164,28 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
                 </select>
             </div>
 
+
+
             <div class="mb-3">
-                <label for="value" class="control-label">Hodnota (Kč)</label>
-                <div class="input-group">
-                    <input
-                        type="number"
-                        class="form-control-lg"
-                        id="value"
-                        name="value"
-                        placeholder="<?php echo $DEFAULT_VALUE; ?>"
-                        value="<?php echo $value; ?>"
-                    />
-                    <!-- <span class="input-group-text"> Kč</span> //-->
-                </div>
+                <label for="target" class="control-label">má hodnotu v roce</label>
+                <select
+                    class="form-select form-select-lg"
+                    name="target"
+                    id="target"
+                >
+                    <?php
+                    for ($y = YEAR_MIN; $y <= YEAR_MAX_TARGET; $y++) {
+                        echo "<option value='$y'";
+                        if ($y == $target) {
+                            echo " selected";
+                        }
+
+                        echo ">$y</option>\n";
+                    }
+                    ?>
+                </select>
             </div>
+
             <div class="mb-3">
                 <button
                     type="submit"
@@ -114,41 +199,38 @@ if (isset($_GET['year']) && isset($_GET['month'])) {
         <div>
             <h2>Hodnoty</h2>
             <?php
-            $calculator = new Calculator();
-            $table = $calculator->conversionTable($value, $year);
-            $value_min = round($table[YEAR_MIN]['value']);
-            $value_max = round($table[YEAR_MAX]['value']);
-            echo(
-                "<p>" .
-                    "<strong>$value&nbsp;Kč</strong> v roce <strong>$year</strong> má stejnou hodnotu jako " .
-                    "<strong>$value_min&nbsp;Kč</strong> v roce <strong>" . YEAR_MIN . "</strong> " .
-                    "nebo <strong>$value_max&nbsp;Kč</strong> v roce <strong>" . YEAR_MAX . "</strong>." .
-                "</p>"
-            );
-
+            echo '<ul>';
+            foreach ($messages as $msg) {
+                echo "<li>$msg</li>\n";
+            }
+            echo '</ul>';
             ?>
 
+            <h2>Tabulka</h2>
             <table class="table table-hover table-bordered">
                 <thead>
                     <tr>
                     <th scope="col">Rok</th>
-                    <th scope="col">Odpovídající hodnota&nbsp;Kč</th>
+                    <th scope="col">Hodnota&nbsp;Kč&nbsp;-&nbsp;Nákup</th>
+                    <th scope="col">Hodnota&nbsp;Kč&nbsp;-&nbsp;Úspory</th>
                     <th scope="col">Inflace</th>
-                    <th scope="col">Koeficient</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php
-                for ($y = YEAR_MIN; $y <= YEAR_MAX; $y++) {
+                for ($y = YEAR_MIN; $y <= YEAR_MAX_TARGET; $y++) {
+                    $mark = ($y >= YEAR_CURRENT ? '* ' : ' ');
                     echo '<tr';
                     if ($y == $year) {
                         echo ' class="table-primary"';
+                    } elseif ($y == $target) {
+                        echo ' class="table-secondary"';
                     }
                     echo '>';
-                    echo '<td>' . $y . '</td>';
-                    echo '<td>' . round($table[$y]['value']) . '</td>';
-                    echo '<td>' . $calculator->inflation($y) . '%</td>';
-                    echo '<td>' . sprintf("%0.3f", $table[$y]['coef']) . '</td>';
+                    echo '<td>' . $mark . '<a href="' . web_link($value, $year, $y) . '">' . $y . '</a></td>';
+                    echo '<td>' . $mark . round($table[$y][VALUE_PURCHASE]) . '</td>';
+                    echo '<td>' . $mark . round($table[$y][VALUE_SAVING]) . '</td>';
+                    echo '<td>' . $mark . sprintf("%0.1f", $calculator->inflation($y)) . '%</td>';
                     echo '</tr>';
                 }
                 ?>

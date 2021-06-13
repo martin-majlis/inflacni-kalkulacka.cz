@@ -16,14 +16,17 @@ check-tests:
 check-code-sniffer:
 	./vendor/bin/phpcbf \
 		--standard=PSR12 \
-		-p \
+		-p -s \
 		$(DIR_SOURCE)/ $(DIR_TEST)/; \
 	./vendor/bin/phpcs \
 		--standard=PSR12 \
-		-p \
+		-p -s \
 		$(DIR_SOURCE)/ $(DIR_TEST)/
 
 check-web:
 	$(call url_check,/,200) && \
 	$(call url_check,/?year=2030&value=10000,400) && \
-	$(call url_check,/?year=2020&value=10000,200)
+	$(call url_check,/?year=2020&value=10000,200) && \
+	$(call url_check,/?format=json,200) && \
+	$(call url_check,/?year=2030&value=10000&format=json,400) && \
+	$(call url_check,/?year=2020&value=10000&format=json,200)

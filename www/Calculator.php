@@ -2,6 +2,8 @@
 
 namespace InflationCalculator;
 
+const TARGET_INFLATION_RATE = 2.0;
+
 // https://www.czso.cz/csu/czso/mira_inflace
 // https://vdb.czso.cz/vdbvo2/faces/cs/index.jsf?page=vystup-objekt&skupId=43&katalog=31779&z=T&f=TABULKA&pvo=CEN08C&pvo=CEN08C
 // https://eprehledy.cz/vyvoj_inflace_cr.php
@@ -36,14 +38,29 @@ const YEAR_TABLE = array(
     2018 => 2.1,
     2019 => 2.8,
     2020 => 3.2,
-    // To make code simpler
-    2021 => 0.0,
+    2021 => TARGET_INFLATION_RATE,
+    2022 => TARGET_INFLATION_RATE,
+    2023 => TARGET_INFLATION_RATE,
+    2024 => TARGET_INFLATION_RATE,
+    2025 => TARGET_INFLATION_RATE,
+    2026 => TARGET_INFLATION_RATE,
+    2027 => TARGET_INFLATION_RATE,
+    2028 => TARGET_INFLATION_RATE,
+    2029 => TARGET_INFLATION_RATE,
+    2030 => TARGET_INFLATION_RATE,
+    2031 => TARGET_INFLATION_RATE,
+    2032 => TARGET_INFLATION_RATE,
+    2033 => TARGET_INFLATION_RATE,
+    2034 => TARGET_INFLATION_RATE,
 );
 
 define('YEAR_MIN', min(array_keys(YEAR_TABLE)));
 define('YEAR_MAX', max(array_keys(YEAR_TABLE)) - 1);
 
-const UNKNOWN_YEAR = 2.0;
+define('VALUE_PURCHASE', 'value_p');
+define('COEF_PURCHASE', 'coef_p');
+define('VALUE_SAVING', 'value_s');
+define('COEF_SAVING', 'coef_s');
 
 class Calculator
 {
@@ -56,17 +73,36 @@ class Calculator
 
         $years = array();
 
-        $coef = 1.0;
-        $years[$year] = array('value' => $coef * $value, 'coef' => $coef);
+        $coef_p = 1.0;
+        $coef_s = 1.0;
+        $years[$year] = array(
+            VALUE_PURCHASE => $coef_p * $value,
+            COEF_PURCHASE => $coef_p,
+            VALUE_SAVING => $coef_s * $value,
+            COEF_SAVING => $coef_s,
+        );
 
         for ($y = ($year - 1); $y >= YEAR_MIN; $y--) {
-            $coef /= ((100.0 + YEAR_TABLE[$y + 1]) / 100.0);
-            $years[$y] = array('value' => $coef * $value, 'coef' => $coef);
+            $coef_p /= ((100.0 + YEAR_TABLE[$y + 1]) / 100.0);
+            $coef_s /= (100.0 / (100.0 + YEAR_TABLE[$y]));
+            $years[$y] = array(
+                VALUE_PURCHASE => $coef_p * $value,
+                COEF_PURCHASE => $coef_p,
+                VALUE_SAVING => $coef_s * $value,
+                COEF_SAVING => $coef_s,
+            );
         }
-        $coef = 1.0;
+        $coef_p = 1.0;
+        $coef_s = 1.0;
         for ($y = $year; $y <= YEAR_MAX; $y++) {
-            $years[$y] = array('value' => $coef * $value, 'coef' => $coef);
-            $coef /= (100.0 / (100.0 + YEAR_TABLE[$y + 1]));
+            $years[$y] = array(
+                VALUE_PURCHASE => $coef_p * $value,
+                COEF_PURCHASE => $coef_p,
+                VALUE_SAVING => $coef_s * $value,
+                COEF_SAVING => $coef_s,
+            );
+            $coef_p /= (100.0 / (100.0 + YEAR_TABLE[$y + 1]));
+            $coef_s /= ((100.0 + YEAR_TABLE[$y]) / 100.0);
         }
 
         ksort($years, SORT_NUMERIC);
@@ -77,6 +113,31 @@ class Calculator
     public function inflation(int $year): float
     {
         return YEAR_TABLE[$year];
+    }
+
+    public function messages(float $value, int $year, int $target): array
+    {
+        $table = $this->conversionTable($value, $year);
+        $messages = array();
+        $value = round($table[$year][VALUE_PURCHASE]);
+        $pValue = round($table[$target][VALUE_PURCHASE]);
+        $sValue = round($table[$target][VALUE_SAVING]);
+        /*
+        $messages[] = (
+            "<strong>$value&nbsp;Kč</strong> v roce <strong>$year</strong> " .
+            "mělo stejnou hodnotu jako <strong>$tValue&nbsp;Kč</strong> v roce $target."
+        );
+        */
+        $messages[] = (
+            "Za <strong>$pValue&nbsp;Kč</strong> v roce <strong>$target</strong> se dalo nakoupit " .
+            "stejně jako za <strong>$value&nbsp;Kč</strong> v roce <strong>$year</strong>."
+        );
+        $messages[] = (
+            "<strong>$sValue&nbsp;Kč</strong> z roku <strong>$target</strong> uložených v šuplíku " .
+            "má stejnou hodnotu jako získání <strong>$value&nbsp;Kč</strong> v roce <strong>$year</strong>."
+        );
+
+        return $messages;
     }
 }
 

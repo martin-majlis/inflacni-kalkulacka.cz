@@ -22,21 +22,21 @@ final class CalculatorTest extends TestCase
 
         $this->assertEquals(
             100000,
-            $calculator->conversionTable(100000, 2015)[2015]['value']
+            $calculator->conversionTable(100000, 2015)[2015][VALUE_PURCHASE]
         );
 
         $this->assertEquals(
             100700,
-            round($calculator->conversionTable(100000, 2015)[2016]['value'])
+            round($calculator->conversionTable(100000, 2015)[2016][VALUE_PURCHASE])
         );
 
         $this->assertEquals(
             99305,
-            round($calculator->conversionTable(100000, 2016)[2015]['value'])
+            round($calculator->conversionTable(100000, 2016)[2015][VALUE_PURCHASE])
         );
         $this->assertEquals(
             100000,
-            $calculator->conversionTable(100000, 2016)[2016]['value']
+            $calculator->conversionTable(100000, 2016)[2016][VALUE_PURCHASE]
         );
     }
 }
