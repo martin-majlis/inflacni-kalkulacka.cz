@@ -1,0 +1,50 @@
+name: Check code quality
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "0 4 * * *"
+
+permissions:
+  actions: write # Needed for skip-duplicate-jobs job
+  contents: read
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Install pre-commit
+        run: |
+          make install-pre-commit
+      - name: Run pre-commit
+        run: |
+          pre-commit run -a
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+      - name: Install dependencies
+        run: |
+          make install-dependencies
+      - name: PHP Code Sniffer
+        run: |
+          make check-code-sniffer
+      - name: Code coverage
+        run: |
+          make coverage
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          verbose: true
