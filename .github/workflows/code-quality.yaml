@@ -20,6 +20,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+      - name: Install dependencies
+        run: |
+          make install-dependencies
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -30,13 +37,6 @@ jobs:
       - name: Run pre-commit
         run: |
           pre-commit run -a
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.1"
-      - name: Install dependencies
-        run: |
-          make install-dependencies
       - name: PHP Code Sniffer
         run: |
           make check-code-sniffer
