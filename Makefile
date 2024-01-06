@@ -8,15 +8,41 @@ url_check=code=`curl --write-out '%{http_code}' --silent --output /dev/null "htt
 install-linux-packages:
 	aptitude install \
 		php-xmlwriter \
-		php-dom
+		php-dom \
+		php-cli \
+		php-json \
+		php-mbstring \
+		php-xml \
+		php-pcov \
+		php-xdebug
+
+install-dependencies:
+	composer self-update
+	composer install
+	composer dump-autoload
+
+install-pre-commit:
+	python -m pip install -U pip
+	python -m pip install pre-commit
+	pre-commit install
 
 update:
 	composer update
 
-check-all: check-tests check-code-sniffer check-web
+check-all: test check-code-sniffer check-web
 
-check-tests:
-	./vendor/bin/phpunit --testdox $(DIR_TEST)
+test:
+	./vendor/bin/phpunit $(DIR_TEST)
+
+#
+coverage:
+	php \
+		-d pcov.enabled=1 \
+		-d pcov.directory=www \
+		./vendor/bin/phpunit \
+		--coverage-clover coverage.xml \
+		--coverage-html coverage.html \
+		$(DIR_TEST)
 
 check-code-sniffer:
 	./vendor/bin/phpcbf \

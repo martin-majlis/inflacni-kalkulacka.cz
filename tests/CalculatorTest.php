@@ -3,18 +3,12 @@
 namespace InflationCalculator;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use InflationCalculator\Calculator;
 
+#[CoversClass(Calculator::class)]
 final class CalculatorTest extends TestCase
 {
-    public function testCanBeUsedAsString(): void
-    {
-        $this->assertEquals(
-            2,
-            1 + 1
-        );
-    }
-
     public function testSameValuesAsPenizecz(): void
     {
         // https://www.penize.cz/kalkulacky/znehodnoceni-koruny-inflace#inflace

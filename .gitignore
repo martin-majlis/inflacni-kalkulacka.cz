@@ -1,4 +1,7 @@
+.phpunit.cache
 .php_cs.cache
 .php-cs-fixer.cache
 .vscode/
 vendor/
+coverage.xml
+coverage.html

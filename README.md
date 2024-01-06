@@ -4,4 +4,4 @@ Inflační kalkulačka pro přepočet hodnoty peněz podle inflace v jednotlivý
 
 # Web
 
-* https://inflacni-kalkulacka.cz
+- https://inflacni-kalkulacka.cz

@@ -64,10 +64,17 @@ define('COEF_SAVING', 'coef_s');
 
 class Calculator
 {
+    public const YEAR_TABLE = YEAR_TABLE;
+    public const YEAR_MIN = YEAR_MIN;
+    public const YEAR_MAX = YEAR_MAX;
+    public const VALUE_PURCHASE = VALUE_PURCHASE;
+    public const COEF_PURCHASE = COEF_PURCHASE;
+    public const VALUE_SAVING = VALUE_SAVING;
+    public const COEF_SAVING = COEF_SAVING;
+
     public function conversionTable(float $value, int $year): array
     {
-        // global $YEAR_TABLE, $YEAR_MIN, $YEAR_MAX;
-        if (! array_key_exists($year, YEAR_TABLE)) {
+        if (! array_key_exists($year, self::YEAR_TABLE)) {
             throw new Exception("Unsupported year $year");
         }
 
@@ -76,33 +83,33 @@ class Calculator
         $coef_p = 1.0;
         $coef_s = 1.0;
         $years[$year] = array(
-            VALUE_PURCHASE => $coef_p * $value,
-            COEF_PURCHASE => $coef_p,
-            VALUE_SAVING => $coef_s * $value,
-            COEF_SAVING => $coef_s,
+            self::VALUE_PURCHASE => $coef_p * $value,
+            self::COEF_PURCHASE => $coef_p,
+            self::VALUE_SAVING => $coef_s * $value,
+            self::COEF_SAVING => $coef_s,
         );
 
-        for ($y = ($year - 1); $y >= YEAR_MIN; $y--) {
-            $coef_p /= ((100.0 + YEAR_TABLE[$y + 1]) / 100.0);
-            $coef_s /= (100.0 / (100.0 + YEAR_TABLE[$y]));
+        for ($y = ($year - 1); $y >= self::YEAR_MIN; $y--) {
+            $coef_p /= ((100.0 + self::YEAR_TABLE[$y + 1]) / 100.0);
+            $coef_s /= (100.0 / (100.0 + self::YEAR_TABLE[$y]));
             $years[$y] = array(
-                VALUE_PURCHASE => $coef_p * $value,
-                COEF_PURCHASE => $coef_p,
-                VALUE_SAVING => $coef_s * $value,
-                COEF_SAVING => $coef_s,
+                self::VALUE_PURCHASE => $coef_p * $value,
+                self::COEF_PURCHASE => $coef_p,
+                self::VALUE_SAVING => $coef_s * $value,
+                self::COEF_SAVING => $coef_s,
             );
         }
         $coef_p = 1.0;
         $coef_s = 1.0;
-        for ($y = $year; $y <= YEAR_MAX; $y++) {
+        for ($y = $year; $y <= self::YEAR_MAX; $y++) {
             $years[$y] = array(
-                VALUE_PURCHASE => $coef_p * $value,
-                COEF_PURCHASE => $coef_p,
-                VALUE_SAVING => $coef_s * $value,
-                COEF_SAVING => $coef_s,
+                self::VALUE_PURCHASE => $coef_p * $value,
+                self::COEF_PURCHASE => $coef_p,
+                self::VALUE_SAVING => $coef_s * $value,
+                self::COEF_SAVING => $coef_s,
             );
-            $coef_p /= (100.0 / (100.0 + YEAR_TABLE[$y + 1]));
-            $coef_s /= ((100.0 + YEAR_TABLE[$y]) / 100.0);
+            $coef_p /= (100.0 / (100.0 + self::YEAR_TABLE[$y + 1]));
+            $coef_s /= ((100.0 + self::YEAR_TABLE[$y]) / 100.0);
         }
 
         ksort($years, SORT_NUMERIC);
@@ -112,16 +119,16 @@ class Calculator
 
     public function inflation(int $year): float
     {
-        return YEAR_TABLE[$year];
+        return self::YEAR_TABLE[$year];
     }
 
     public function messages(float $value, int $year, int $target): array
     {
         $table = $this->conversionTable($value, $year);
         $messages = array();
-        $value = round($table[$year][VALUE_PURCHASE]);
-        $pValue = round($table[$target][VALUE_PURCHASE]);
-        $sValue = round($table[$target][VALUE_SAVING]);
+        $value = round($table[$year][self::VALUE_PURCHASE]);
+        $pValue = round($table[$target][self::VALUE_PURCHASE]);
+        $sValue = round($table[$target][self::VALUE_SAVING]);
         /*
         $messages[] = (
             "<strong>$value&nbsp;Kč</strong> v roce <strong>$year</strong> " .
