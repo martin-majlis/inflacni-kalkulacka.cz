@@ -5,6 +5,11 @@ url_check=code=`curl --write-out '%{http_code}' --silent --output /dev/null "htt
 	echo "$1 => Exp: $2, Was: $${code}" && \
 	test $${code} -eq $2
 
+install-linux-packages:
+	aptitude install \
+		php-xmlwriter \
+		php-dom
+
 update:
 	composer update
 
