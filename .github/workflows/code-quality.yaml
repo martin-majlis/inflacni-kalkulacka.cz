@@ -14,6 +14,7 @@ permissions:
   actions: write # Needed for skip-duplicate-jobs job
   contents: read
 
+jobs:
   build:
     runs-on: ubuntu-latest
 
