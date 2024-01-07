@@ -248,6 +248,9 @@ if (isset($_GET['year']) && isset($_GET['value']) && isset($_GET['target'])) {
                 <li>Data:
                     <a href="https://www.czso.cz/csu/czso/mira_inflace">
                         ČSÚ: Inflace - druhy, definice, tabulky
+                    </a>,
+                    <a href="https://www.cnb.cz/cs/menova-politika/prognoza/">
+                        ČNB: Prognóza
                     </a>
                 </li>
                 <li>API:
