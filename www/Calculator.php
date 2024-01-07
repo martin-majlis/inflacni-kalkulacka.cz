@@ -9,6 +9,10 @@ const TARGET_INFLATION_RATE = 2.0;
 // https://eprehledy.cz/vyvoj_inflace_cr.php
 // http://www.czso.cz/csu/redakce.nsf/i/mira_inflace
 
+
+// https://www.cnb.cz/cs/menova-politika/prognoza/
+// https://www.czso.cz/csu/czso/mira_inflace
+
 const YEAR_TABLE = array(
     1993 => 20.8,
     1994 => 10.0,
@@ -40,9 +44,9 @@ const YEAR_TABLE = array(
     2020 => 3.2,
     2021 => 3.8,
     2022 => 15.1,
-    2023 => TARGET_INFLATION_RATE,
-    2024 => TARGET_INFLATION_RATE,
-    2025 => TARGET_INFLATION_RATE,
+    2023 => 10.8,
+    2024 => 2.6,
+    2025 => 2.1,
     2026 => TARGET_INFLATION_RATE,
     2027 => TARGET_INFLATION_RATE,
     2028 => TARGET_INFLATION_RATE,
