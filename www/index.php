@@ -211,14 +211,16 @@ if (isset($_GET['year']) && isset($_GET['value']) && isset($_GET['target'])) {
                 <thead>
                     <tr>
                     <th scope="col">Rok</th>
-                    <th scope="col">Hodnota&nbsp;Kč&nbsp;-&nbsp;Nákup</th>
-                    <th scope="col">Hodnota&nbsp;Kč&nbsp;-&nbsp;Úspory</th>
+                    <th scope="col">Nákup&nbsp;Kč</th>
+                    <th scope="col">Úspory&nbsp;Kč</th>
                     <th scope="col">Inflace</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php
-                for ($y = YEAR_MIN; $y <= YEAR_MAX_TARGET; $y++) {
+                $year_min = max(YEAR_MIN, min($year, $target) - 2);
+                $year_max = min(YEAR_MAX, max($year, $target) + 2);
+                for ($y = $year_min; $y <= $year_max; $y++) {
                     $mark = ($y >= YEAR_CURRENT ? '* ' : ' ');
                     echo '<tr';
                     if ($y == $year) {
