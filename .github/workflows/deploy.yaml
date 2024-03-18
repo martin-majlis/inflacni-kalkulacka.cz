@@ -18,3 +18,4 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./www/
+          server-dir: /inflacni-kalkulacka.cz/www/
