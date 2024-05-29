@@ -56,8 +56,14 @@ check-code-sniffer:
 
 check-web:
 	$(call url_check,/,200) && \
-	$(call url_check,/?year=2030&value=10000,400) && \
+	$(call url_check,/?year=2040&value=10000,400) && \
 	$(call url_check,/?year=2020&value=10000,200) && \
+	$(call url_check,/?year=2020&value=10+000,200) && \
+	$(call url_check,/?year=2020&value=10+000.24,200) && \
+	$(call url_check,/?target=2020&values=1994%3B10000%0D%0A1995%3B10000,200) && \
+	$(call url_check,/?target=2020&values=1994%3B%0D%0A1995%3B10000,400) && \
 	$(call url_check,/?format=json,200) && \
-	$(call url_check,/?year=2030&value=10000&format=json,400) && \
-	$(call url_check,/?year=2020&value=10000&format=json,200)
+	$(call url_check,/?year=2040&value=10000&format=json,400) && \
+	$(call url_check,/?year=2020&value=10000&format=json,200) && \
+	$(call url_check,/?target=2020&values=1994%3B10000%0D%0A1995%3B10000&format=json,200) && \
+	$(call url_check,/?target=2020&values=1994%3B%0D%0A1995%3B10000&format=json,400)

@@ -1,53 +1,94 @@
 <?php
 require_once('Calculator.php');
+require_once('ParsingException.php');
+require_once('Parser.php');
+
 
 use InflationCalculator\Calculator;
+use InflationCalculator\Parser;
+use InflationCalculator\ParsingException;
 
 // https://github.com/squizlabs/PHP_CodeSniffer/wiki/Advanced-Usage
 // TODO: just PSR1.Files.SideEffects.FoundWithSymbols - does not work :/
 // phpcs:disable
-define('DEFAULT_VALUE', 10000);
+define('DEFAULT_VALUE_SINGLE', 10000);
+define('DEFAULT_VALUE_MULTIPLE', "1994;10000\n1995;10000\n1996;10000\n1997;10000\n1998;10000\n1999;10000\n2000;10000");
 define('LOOKAHEAD_YEARS', 5);
 
 define('YEAR_CURRENT', intval(date('Y')));
 define('YEAR_DEFAULT', "" . (YEAR_CURRENT - 1));
 define('YEAR_MAX_TARGET', YEAR_CURRENT + LOOKAHEAD_YEARS);
 
-function web_link(float $v, int $y, int $t): string
+function web_link(?string $value, ?string $values, int $y, int $t): string
 {
-    return 'https://' . $_SERVER['HTTP_HOST'] . "/?year=$y&value=$v&target=$t";
+    return 'https://' . $_SERVER['HTTP_HOST'] . '/?year=' . urlencode($y) . '&value=' . urlencode($value) . '&values=' . urlencode($values) . '&target=' . urlencode($t);
 }
 // phpcs:enable
 
-$year = intval($_GET['year'] ?? YEAR_DEFAULT);
-$target = intval($_GET['target'] ?? 0);
-if ($target == 0) {
+$ERRORS = array();
+
+$parser = new Parser();
+
+if (isset($_GET['year'])) {
+    try {
+        $year = $parser->fromCzechNumberToYear($_GET['year']);
+    } catch (ParsingException $e) {
+        $ERRORS = array_merge($ERRORS, $e->getErrors());
+    }
+}
+if (!isset($year)) {
+    $year = YEAR_DEFAULT;
+}
+
+
+if (isset($_GET['target'])) {
+    try {
+        $target = $parser->fromCzechNumberToYear($_GET['target']);
+    } catch (ParsingException $e) {
+        $ERRORS = array_merge($ERRORS, $e->getErrors());
+    }
+}
+if (! isset($target)) {
     $target = $year - LOOKAHEAD_YEARS;
     if ($target < YEAR_MIN) {
         $target = $year + LOOKAHEAD_YEARS;
     }
 }
 
-$value = floatval($_GET['value'] ?? DEFAULT_VALUE);
-if ($value == 0) {
-    $value = DEFAULT_VALUE;
+
+try {
+    $value = $parser->parseValue($_GET['value'] ?? DEFAULT_VALUE_SINGLE, DEFAULT_VALUE_SINGLE);
+} catch (ParsingException $e) {
+    $ERRORS = array_merge($ERRORS, $e->getErrors());
 }
+
+try {
+    $values = $parser->parseValues($_GET['values'] ?? DEFAULT_VALUE_MULTIPLE, DEFAULT_VALUE_MULTIPLE);
+} catch (ParsingException $e) {
+    $ERRORS = array_merge($ERRORS, $e->getErrors());
+}
+
 $format = $_GET['format'] ?? 'html';
 
-$web_url = web_link($value, $year, $target);
+$web_url = web_link($_GET['value'] ?? null, $_GET['values'] ?? null, $year, $target);
 $api_url = $web_url . '&format=json';
 
-if ($year < YEAR_MIN || $year > YEAR_MAX) {
-    http_response_code(400);
-    echo "Year $year is not valid. It has to be between " . YEAR_MIN . " and " . YEAR_MAX;
-    exit(0);
-}
+
 
 // print("YEAR: $year; VALUE: $value; Format: $format");
 
 $calculator = new Calculator();
-$table = $calculator->conversionTable($value, $year);
+if (isset($value)) {
+    $tableSingle = $calculator->conversionTable($value, $year);
+}
+if (isset($values)) {
+    $tableMultiple = $calculator->totalTable($values, $target);
+}
 
+
+if (count($ERRORS)) {
+    header('HTTP/1.1 400 Bad Request');
+}
 if ($format == 'json') {
     header('Content-Type: application/json');
     echo json_encode(
@@ -55,8 +96,10 @@ if ($format == 'json') {
             'input' => array(
                 'year' => $year,
                 'value' => $value,
+                'values' => $values,
             ),
-            'year' => $table
+            'result' => $table,
+            'errors' => $ERRORS,
         )
     );
     exit(0);
@@ -67,18 +110,37 @@ if ($format == 'json') {
     exit(0);
 }
 
-$messages = $calculator->messages($value, $year, $target);
-
 $title = 'Inflační kalkulačka';
 $description = (
     'Inflační kalkulačka vám spočítá, jakou hodnotu měly Vaše peníze v minulosti a ' .
     'jakou budou mit hodnotu v budoucnosti.'
 );
-if (isset($_GET['year']) && isset($_GET['value']) && isset($_GET['target'])) {
+
+if (isset($value)) {
+    $messagesSingle = $calculator->messagesValue($value, $year, $target, $tableSingle);
+}
+
+if (isset($values)) {
+    $messagesMultiple = $calculator->messagesValues($values, $year, $target, $tableMultiple);
+}
+
+$classSingle = 'active';
+$classMultiple = '';
+if (isset($_GET['year']) && isset($_GET['value']) && isset($_GET['target']) && isset($messagesSingle)) {
     $title .= " - hodnota $value z roku $year";
     $description = html_entity_decode(
-        strip_tags('Inflační kalkulačka: ' . implode('; ', $messages))
+        strip_tags('Inflační kalkulačka: ' . implode('; ', $messagesSingle))
     );
+}
+if (isset($_GET['values']) && isset($_GET['target'])) {
+    if (isset($messagesMultiple)) {
+        $title .= " - hodnota v roce $target";
+        $description = html_entity_decode(
+            strip_tags('Inflační kalkulačka: ' . implode('; ', $messagesMultiple))
+        );
+    }
+    $classMultiple = 'active';
+    $classSingle = '';
 }
 
 // https://developer.mozilla.org/en-US/docs/Learn/HTML/Introduction_to_HTML/The_head_metadata_in_HTML
@@ -94,10 +156,15 @@ if (isset($_GET['year']) && isset($_GET['value']) && isset($_GET['target'])) {
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
-            rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x"
-            crossorigin="anonymous"
-        />
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+            crossorigin="anonymous">
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+            crossorigin="anonymous"></script>
+
         <title><?php echo $title; ?></title>
         <meta property="og:site_name" content="Inflační kalkulačka" />
         <meta property='og:url' content="<?php echo $web_url; ?>" />
@@ -128,117 +195,269 @@ if (isset($_GET['year']) && isset($_GET['value']) && isset($_GET['target'])) {
             jakou budou mit hodnotu v budoucnosti.
         </p>
 
-        <form class="row">
-        <div class="mb-3">
-                <label for="value" class="control-label">Hodnota (Kč)</label>
-                <div class="input-group">
-                    <input
-                        type="number"
-                        class="form-control-lg"
-                        id="value"
-                        name="value"
-                        placeholder="<?php echo DEFAULT_VALUE; ?>"
-                        value="<?php echo $value; ?>"
-                    />
-                    <!-- <span class="input-group-text"> Kč</span> //-->
-                </div>
-            </div>
+        <?php
 
-            <div class="mb-3">
-                <label for="year" class="control-label">z roku</label>
-                <select
-                    class="form-select form-select-lg"
-                    name="year"
-                    id="year"
-                >
-                    <?php
-                    for ($y = YEAR_MIN; $y <= YEAR_DEFAULT; $y++) {
-                        echo "<option value='$y'";
-                        if ($y == $year) {
-                            echo " selected";
-                        }
-
-                        echo ">$y</option>\n";
-                    }
-                    ?>
-                </select>
-            </div>
-
-
-
-            <div class="mb-3">
-                <label for="target" class="control-label">má hodnotu v roce</label>
-                <select
-                    class="form-select form-select-lg"
-                    name="target"
-                    id="target"
-                >
-                    <?php
-                    for ($y = YEAR_MIN; $y <= YEAR_MAX_TARGET; $y++) {
-                        echo "<option value='$y'";
-                        if ($y == $target) {
-                            echo " selected";
-                        }
-
-                        echo ">$y</option>\n";
-                    }
-                    ?>
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <button
-                    type="submit"
-                    class="btn-lg btn-primary"
-                >
-                    Spočítej
-                </button>
-            </div>
-        </form>
-
-        <div>
-            <h2>Hodnoty</h2>
-            <?php
-            echo '<ul>';
-            foreach ($messages as $msg) {
-                echo "<li>$msg</li>\n";
+        if (count($ERRORS)) {
+            echo '<div id="alers">';
+            foreach ($ERRORS as $error) {
+                echo '<div class="alert alert-danger" role="alert">' . $error . '</div>';
             }
-            echo '</ul>';
-            ?>
+            echo '</div>';
+        }
+        ?>
 
-            <h2>Tabulka</h2>
-            <table class="table table-hover table-bordered">
-                <thead>
-                    <tr>
-                    <th scope="col">Rok</th>
-                    <th scope="col">Nákup&nbsp;Kč</th>
-                    <th scope="col">Úspory&nbsp;Kč</th>
-                    <th scope="col">Inflace</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button
+                    class="nav-link <?php echo $classSingle; ?>"
+                    id="single-tab"
+                    data-bs-toggle="tab"
+                    data-bs-target="#single"
+                    type="button"
+                    role="tab"
+                    aria-controls="single"
+                    aria-selected="true"
+                >Jednotlivě</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button
+                    class="nav-link <?php echo $classMultiple; ?>"
+                    id="multi-tab"
+                    data-bs-toggle="tab"
+                    data-bs-target="#multi"
+                    type="button"
+                    role="tab"
+                    aria-controls="multi"
+                    aria-selected="false"
+                >V čase</button>
+            </li>
+        </ul>
+
+
+        <div class="tab-content" id="myTabContent">
+
+        <div class="tab-pane show <?php echo $classSingle; ?>" id="single" role="tabpanel" aria-labelledby="single-tab">
+
+            <form class="row">
+            <div class="mb-3">
+                    <label for="value" class="control-label">Hodnota (Kč)</label>
+                    <div class="input-group">
+                        <input
+                            type="number"
+                            class="form-control-lg"
+                            id="value"
+                            name="value"
+                            placeholder="<?php echo DEFAULT_VALUE_SINGLE; ?>"
+                            value="<?php echo $_GET['value'] ?? DEFAULT_VALUE_SINGLE; ?>"
+                        />
+                        <!-- <span class="input-group-text"> Kč</span> //-->
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="year" class="control-label">z roku</label>
+                    <select
+                        class="form-select form-select-lg"
+                        name="year"
+                        id="year"
+                    >
+                        <?php
+                        for ($y = YEAR_MIN; $y <= YEAR_DEFAULT; $y++) {
+                            echo "<option value='$y'";
+                            if ($y == $year) {
+                                echo " selected";
+                            }
+
+                            echo ">$y</option>\n";
+                        }
+                        ?>
+                    </select>
+                </div>
+
+
+
+                <div class="mb-3">
+                    <label for="target" class="control-label">má hodnotu v roce</label>
+                    <select
+                        class="form-select form-select-lg"
+                        name="target"
+                        id="target"
+                    >
+                        <?php
+                        for ($y = YEAR_MIN; $y <= YEAR_MAX_TARGET; $y++) {
+                            echo "<option value='$y'";
+                            if ($y == $target) {
+                                echo " selected";
+                            }
+
+                            echo ">$y</option>\n";
+                        }
+                        ?>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <button
+                        type="submit"
+                        class="btn-lg btn-primary"
+                    >
+                        Spočítej
+                    </button>
+                </div>
+            </form>
+
+            <div>
+                <h2>Hodnoty</h2>
                 <?php
-                $year_min = max(YEAR_MIN, min($year, $target) - 2);
-                $year_max = min(YEAR_MAX, max($year, $target) + 2);
-                for ($y = $year_min; $y <= $year_max; $y++) {
-                    $mark = ($y >= YEAR_CURRENT ? '* ' : ' ');
-                    echo '<tr';
-                    if ($y == $year) {
-                        echo ' class="table-primary"';
-                    } elseif ($y == $target) {
-                        echo ' class="table-secondary"';
+                if (isset($messagesSingle)) {
+                    echo '<ul>';
+                    foreach ($messagesSingle as $msg) {
+                        echo "<li>$msg</li>\n";
                     }
-                    echo '>';
-                    echo '<td>' . $mark . '<a href="' . web_link($value, $year, $y) . '">' . $y . '</a></td>';
-                    echo '<td>' . $mark . round($table[$y][VALUE_PURCHASE]) . '</td>';
-                    echo '<td>' . $mark . round($table[$y][VALUE_SAVING]) . '</td>';
-                    echo '<td>' . $mark . sprintf("%0.1f", $calculator->inflation($y)) . '%</td>';
-                    echo '</tr>';
+                    echo '</ul>';
                 }
                 ?>
-                </tbody>
-            </table>
 
+                <h2>Tabulka</h2>
+                <table class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                        <th scope="col">Rok</th>
+                        <th scope="col">Nákup&nbsp;Kč</th>
+                        <th scope="col">Úspory&nbsp;Kč</th>
+                        <th scope="col">Inflace</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php
+                    if (isset($tableSingle)) {
+                        $year_min = max(YEAR_MIN, min($year, $target) - 2);
+                        $year_max = min(YEAR_MAX, max($year, $target) + 2);
+                        for ($y = $year_min; $y <= $year_max; $y++) {
+                            $mark = ($y >= YEAR_CURRENT ? '* ' : ' ');
+                            echo '<tr';
+                            if ($y == $year) {
+                                echo ' class="table-primary"';
+                            } elseif ($y == $target) {
+                                echo ' class="table-secondary"';
+                            }
+                            echo '>';
+                            echo '<td>' . $mark . '<a href="' .
+                                web_link($_GET['value'] ?? null, $_GET['values'] ?? null, $year, $y) .
+                                '">' . $y . '</a></td>';
+                            echo '<td>' . $mark . round($tableSingle[$y][VALUE_PURCHASE]) . '</td>';
+                            echo '<td>' . $mark . round($tableSingle[$y][VALUE_SAVING]) . '</td>';
+                            echo '<td>' . $mark . sprintf("%0.1f", $calculator->inflation($y)) . '%</td>';
+                            echo '</tr>';
+                        }
+                    }
+                    ?>
+                    </tbody>
+                </table>
+                </div>
+
+
+        </div>
+
+        <div class="tab-pane <?php echo $classMultiple; ?>" id="multi" role="tabpanel" aria-labelledby="multi-tab">
+        <form class="row">
+            <div class="mb-3">
+                    <label for="values" class="control-label">Rok; Hodnoty (Kč)</label>
+                    <div class="input-group">
+                        <textarea
+                            class="form-control-lg"
+                            id="values"
+                            name="values"
+                            placeholder="<?php echo DEFAULT_VALUE_MULTIPLE; ?>"
+                            rows="8"
+                        ><?php echo $_GET['values'] ?? DEFAULT_VALUE_MULTIPLE; ?>
+                    </textarea>
+                        <!-- <span class="input-group-text"> Kč</span> //-->
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="target" class="control-label">má hodnotu v roce</label>
+                    <select
+                        class="form-select form-select-lg"
+                        name="target"
+                        id="target"
+                    >
+                        <?php
+                        for ($y = YEAR_MIN; $y <= YEAR_MAX_TARGET; $y++) {
+                            echo "<option value='$y'";
+                            if ($y == $target) {
+                                echo " selected";
+                            }
+
+                            echo ">$y</option>\n";
+                        }
+                        ?>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <button
+                        type="submit"
+                        class="btn-lg btn-primary"
+                    >
+                        Spočítej
+                    </button>
+                </div>
+            </form>
+
+            <div>
+            <h2>Hodnoty</h2>
+                <?php
+                if (isset($messagesMultiple)) {
+                    echo '<ul>';
+                    foreach ($messagesMultiple as $msg) {
+                        echo "<li>$msg</li>\n";
+                    }
+                    echo '</ul>';
+                }
+                ?>
+            <h2>Tabulka</h2>
+                <table class="table table-hover table-bordered">
+                    <thead>
+                        <tr>
+                        <th scope="col">Rok</th>
+                        <th scope="col">Hodnota&nbsp;Kč</th>
+                        <th scope="col">Nákup&nbsp;Kč</th>
+                        <th scope="col">Úspory&nbsp;Kč</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php
+                    if (isset($tableMultiple)) {
+                        foreach ($tableMultiple['table'] as $row) {
+                            echo '<tr>';
+                            echo '<td><a href="' .
+                                web_link($row[VALUE_INPUT], null, $row[YEAR_INPUT], $target) .
+                                '">' . $row[YEAR_INPUT] . '</a></td>';
+                            echo '<td>' . $row[VALUE_INPUT] . '</td>';
+                            echo '<td>' . round($row[VALUE_PURCHASE]) . '</td>';
+                            echo '<td>' . round($row[VALUE_SAVING]) . '</td>';
+                            echo '</tr>';
+                        }
+                    }
+                    ?>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td scope="col">Celkem</td>
+                        <?php
+                        if (isset($tableMultiple)) {
+                            echo '<td>' . round($tableMultiple['total'][VALUE_INPUT]) . '</td>';
+                            echo '<td>' . round($tableMultiple['total'][VALUE_PURCHASE]) . '</td>';
+                            echo '<td>' . round($tableMultiple['total'][VALUE_SAVING]) . '</td>';
+                        }
+                        ?>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
 
         </div>
 
@@ -279,7 +498,5 @@ if (isset($_GET['year']) && isset($_GET['value']) && isset($_GET['target'])) {
 
     gtag('config', 'UA-322031-31');
     </script>
-
-
 </body>
 </html>
