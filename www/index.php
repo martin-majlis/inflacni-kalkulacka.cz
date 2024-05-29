@@ -250,7 +250,6 @@ if (isset($_GET['values']) && isset($_GET['target'])) {
                             placeholder="<?php echo DEFAULT_VALUE_SINGLE; ?>"
                             value="<?php echo $_GET['value'] ?? DEFAULT_VALUE_SINGLE; ?>"
                         />
-                        <!-- <span class="input-group-text"> Kč</span> //-->
                     </div>
                 </div>
 
@@ -371,7 +370,6 @@ if (isset($_GET['values']) && isset($_GET['target'])) {
                             placeholder="<?php echo DEFAULT_VALUE_MULTIPLE; ?>"
                             rows="8"
                         ><?php echo $_GET['values'] ?? DEFAULT_VALUE_MULTIPLE; ?></textarea>
-                        <!-- <span class="input-group-text"> Kč</span> //-->
                     </div>
                 </div>
 
