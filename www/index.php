@@ -370,8 +370,7 @@ if (isset($_GET['values']) && isset($_GET['target'])) {
                             name="values"
                             placeholder="<?php echo DEFAULT_VALUE_MULTIPLE; ?>"
                             rows="8"
-                        ><?php echo $_GET['values'] ?? DEFAULT_VALUE_MULTIPLE; ?>
-                    </textarea>
+                        ><?php echo $_GET['values'] ?? DEFAULT_VALUE_MULTIPLE; ?></textarea>
                         <!-- <span class="input-group-text"> Kč</span> //-->
                     </div>
                 </div>
