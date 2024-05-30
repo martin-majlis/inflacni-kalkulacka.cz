@@ -18,7 +18,7 @@ jobs:
   code-quality:
     runs-on: ubuntu-latest
     env:
-      PHP_EXTENSIONS: none, ctype, dom, json, libxml, mbstring, openssl, pdo_sqlite, soap, tokenizer, xml, xmlwriter
+      PHP_EXTENSIONS: none, ctype, dom, json, libxml, mbstring, openssl, pdo_sqlite, soap, tokenizer, xml, xmlwriter, simplexml
       PHP_INI_VALUES: memory_limit=-1, assert.exception=1, zend.assertions=1, error_reporting=-1, log_errors_max_len=0, display_errors=On
 
     steps:
