@@ -369,7 +369,7 @@ if (isset($_GET['values']) && isset($_GET['target'])) {
                             name="values"
                             placeholder="<?php echo DEFAULT_VALUE_MULTIPLE; ?>"
                             rows="8"
-                        ><?php echo $_GET['values'] ?? DEFAULT_VALUE_MULTIPLE; ?></textarea>
+                        ><?php echo trim($_GET['values'] ?? DEFAULT_VALUE_MULTIPLE); ?></textarea>
                     </div>
                 </div>
 
@@ -442,7 +442,7 @@ if (isset($_GET['values']) && isset($_GET['target'])) {
                     </tbody>
                     <tfoot>
                     <tr>
-                        <td scope="col">Celkem</td>
+                        <td scope="col">Celkem v roce <?php echo $target; ?></td>
                         <?php
                         if (isset($tableMultiple)) {
                             echo '<td>' . round($tableMultiple['total'][VALUE_INPUT]) . '</td>';
