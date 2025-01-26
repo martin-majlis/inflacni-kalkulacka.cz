@@ -26,6 +26,7 @@ jobs:
           php-version: "8.3"
       - name: Install Linux Packages
         run: |
+          sudo apt-get update
           sudo make install-linux-packages
       - name: Install dependencies
         run: |
