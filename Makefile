@@ -6,7 +6,7 @@ url_check=code=`curl --write-out '%{http_code}' --silent --output /dev/null "htt
 	test $${code} -eq $2
 
 install-linux-packages:
-	aptitude install \
+	apt-get install -y \
 		php-xmlwriter \
 		php-dom \
 		php-cli \
