@@ -1,20 +1,20 @@
 DIR_TEST=tests
 DIR_SOURCE=www
+PHP_VERSION=8.3
 
 url_check=code=`curl --write-out '%{http_code}' --silent --output /dev/null "http://inflacni-kalkulacka.test$1"` && \
 	echo "$1 => Exp: $2, Was: $${code}" && \
 	test $${code} -eq $2
 
+# php$(PHP_VERSION)-json
 install-linux-packages:
-	aptitude install \
-		php-xmlwriter \
-		php-dom \
-		php-cli \
-		php-json \
-		php-mbstring \
-		php-xml \
-		php-pcov \
-		php-xdebug
+	apt-get install -y \
+		php$(PHP_VERSION)-dom \
+		php$(PHP_VERSION)-cli \
+		php$(PHP_VERSION)-mbstring \
+		php$(PHP_VERSION)-xml \
+		php$(PHP_VERSION)-pcov \
+		php$(PHP_VERSION)-xdebug
 
 install-dependencies:
 	composer self-update

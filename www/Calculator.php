@@ -45,9 +45,9 @@ const YEAR_TABLE = array(
     2021 => 3.8,
     2022 => 15.1,
     2023 => 10.7,
-    2024 => 2.3,
-    2025 => 2.0,
-    2026 => TARGET_INFLATION_RATE,
+    2024 => 2.5,
+    2025 => 2.6,
+    2026 => 2.2,
     2027 => TARGET_INFLATION_RATE,
     2028 => TARGET_INFLATION_RATE,
     2029 => TARGET_INFLATION_RATE,
@@ -59,8 +59,9 @@ const YEAR_TABLE = array(
 );
 
 define('YEAR_MIN', min(array_keys(YEAR_TABLE)));
+const YEAR_MIN = \YEAR_MIN;
 define('YEAR_MAX', max(array_keys(YEAR_TABLE)) - 1);
-
+const YEAR_MAX = \YEAR_MAX;
 
 define('YEAR', 'year');
 define('YEAR_INPUT', 'year_input');
