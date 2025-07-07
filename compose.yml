@@ -1,0 +1,23 @@
+services:
+
+  nginx:
+    container_name: inflacni-kalkulacka_nginx
+    volumes:
+      - "./:/var/www/html"
+    build:
+      context: .
+      dockerfile: docker/nginx.dockerfile
+    ports:
+      - "9090:8080"
+
+  php:
+    container_name: inflacni-kalkulacka_php-fpm
+    build:
+      context: .
+      dockerfile: docker/php.dockerfile
+    environment:
+      "PHP_UPLOAD_LIMIT": "128M"
+      "PHP_MODE": "development"
+      "PHP_OPCACHE": 0
+    volumes:
+      - ./:/var/www/html
