@@ -59,8 +59,9 @@ const YEAR_TABLE = array(
 );
 
 define('YEAR_MIN', min(array_keys(YEAR_TABLE)));
+const YEAR_MIN = \YEAR_MIN;
 define('YEAR_MAX', max(array_keys(YEAR_TABLE)) - 1);
-
+const YEAR_MAX = \YEAR_MAX;
 
 define('YEAR', 'year');
 define('YEAR_INPUT', 'year_input');

@@ -3,6 +3,7 @@
 namespace InflationCalculator;
 
 use InflationCalculator\ParsingException;
+use InflationCalculator\Calculator;
 
 class Parser
 {
@@ -39,7 +40,7 @@ class Parser
 
         if (is_numeric($value)) {
             $year = intval($value);
-            if ($year >= YEAR_MIN && $year <= YEAR_MAX) {
+            if ($year >= \YEAR_MIN && $year <= \YEAR_MAX) {
                 return $year;
             }
         }
