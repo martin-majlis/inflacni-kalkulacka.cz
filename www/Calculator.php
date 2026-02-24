@@ -183,9 +183,9 @@ class Calculator
     public function messagesValue(float $value, int $year, int $target, array $table): array
     {
         $messages = array();
-        $value = round($table[$target][self::VALUE_INPUT]);
-        $pValue = round($table[$target][self::VALUE_PURCHASE]);
-        $sValue = round($table[$target][self::VALUE_SAVING]);
+        $value = number_format(round($table[$target][self::VALUE_INPUT]), 0, ',', ' ');
+        $pValue = number_format(round($table[$target][self::VALUE_PURCHASE]), 0, ',', ' ');
+        $sValue = number_format(round($table[$target][self::VALUE_SAVING]), 0, ',', ' ');
         /*
         $messages[] = (
             "<strong>$value&nbsp;Kč</strong> v roce <strong>$year</strong> " .
@@ -207,9 +207,9 @@ class Calculator
     public function messagesValues(array $values, int $year, int $target, array $table): array
     {
         $messages = array();
-        $value = round($table['total'][self::VALUE_INPUT]);
-        $pValue = round($table['total'][self::VALUE_PURCHASE]);
-        $sValue = round($table['total'][self::VALUE_SAVING]);
+        $value = number_format(round($table['total'][self::VALUE_INPUT]), 0, ',', ' ');
+        $pValue = number_format(round($table['total'][self::VALUE_PURCHASE]), 0, ',', ' ');
+        $sValue = number_format(round($table['total'][self::VALUE_SAVING]), 0, ',', ' ');
         /*
         $messages[] = (
             "<strong>$value&nbsp;Kč</strong> v roce <strong>$year</strong> " .

@@ -344,8 +344,8 @@ if (isset($_GET['values']) && isset($_GET['target'])) {
                             echo '<td>' . $mark . '<a href="' .
                                 web_link($_GET['value'] ?? null, $_GET['values'] ?? null, $year, $y) .
                                 '">' . $y . '</a></td>';
-                            echo '<td>' . $mark . round($tableSingle[$y][VALUE_PURCHASE]) . '</td>';
-                            echo '<td>' . $mark . round($tableSingle[$y][VALUE_SAVING]) . '</td>';
+                            echo '<td>' . $mark . number_format(round($tableSingle[$y][VALUE_PURCHASE]), 0, ',', ' ') . '</td>';
+                            echo '<td>' . $mark . number_format(round($tableSingle[$y][VALUE_SAVING]), 0, ',', ' ') . '</td>';
                             echo '<td>' . $mark . sprintf("%0.1f", $calculator->inflation($y)) . '%</td>';
                             echo '</tr>';
                         }
@@ -432,9 +432,9 @@ if (isset($_GET['values']) && isset($_GET['target'])) {
                             echo '<td><a href="' .
                                 web_link($row[VALUE_INPUT], null, $row[YEAR_INPUT], $target) .
                                 '">' . $row[YEAR_INPUT] . '</a></td>';
-                            echo '<td>' . $row[VALUE_INPUT] . '</td>';
-                            echo '<td>' . round($row[VALUE_PURCHASE]) . '</td>';
-                            echo '<td>' . round($row[VALUE_SAVING]) . '</td>';
+                            echo '<td>' . number_format($row[VALUE_INPUT], 0, ',', ' ') . '</td>';
+                            echo '<td>' . number_format(round($row[VALUE_PURCHASE]), 0, ',', ' ') . '</td>';
+                            echo '<td>' . number_format(round($row[VALUE_SAVING]), 0, ',', ' ') . '</td>';
                             echo '</tr>';
                         }
                     }
@@ -445,9 +445,9 @@ if (isset($_GET['values']) && isset($_GET['target'])) {
                         <td scope="col">Celkem v roce <?php echo $target; ?></td>
                         <?php
                         if (isset($tableMultiple)) {
-                            echo '<td>' . round($tableMultiple['total'][VALUE_INPUT]) . '</td>';
-                            echo '<td>' . round($tableMultiple['total'][VALUE_PURCHASE]) . '</td>';
-                            echo '<td>' . round($tableMultiple['total'][VALUE_SAVING]) . '</td>';
+                            echo '<td>' . number_format(round($tableMultiple['total'][VALUE_INPUT]), 0, ',', ' ') . '</td>';
+                            echo '<td>' . number_format(round($tableMultiple['total'][VALUE_PURCHASE]), 0, ',', ' ') . '</td>';
+                            echo '<td>' . number_format(round($tableMultiple['total'][VALUE_SAVING]), 0, ',', ' ') . '</td>';
                         }
                         ?>
                         </tr>
